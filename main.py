@@ -1,19 +1,81 @@
+from datetime import datetime
+
 pacientes = []
 consultas = []
 paciente_logado = None
+
+# ------------------- FUNÇÕES DE VALIDAÇÃO -------------------
+
+def input_nome_valido():
+    while True:
+        nome = input("Nome: ").strip()
+        if not nome:
+            print("Nome não pode ser vazio.")
+        elif nome.isdigit():
+            print("Nome não pode conter apenas números.")
+        else:
+            return nome
+
+def input_email_valido():
+    while True:
+        email = input("Email: ").strip()
+        if not email or '@' not in email or '.' not in email:
+            print("Email inválido. Exemplo válido: usuario@email.com")
+        else:
+            return email
+
+def input_senha_valida():
+    while True:
+        senha = input("Senha: ").strip()
+        if len(senha) < 4:
+            print("A senha deve ter pelo menos 4 caracteres.")
+        else:
+            return senha
+
+def input_data_valida():
+    while True:
+        data = input("Data (dd/mm/aaaa): ").strip()
+        try:
+            datetime.strptime(data, "%d/%m/%Y")
+            return data
+        except ValueError:
+            print("Data inválida! Use o formato dd/mm/aaaa.")
+
+def input_hora_valida():
+    while True:
+        hora = input("Hora (hh:mm): ").strip()
+        try:
+            datetime.strptime(hora, "%H:%M")
+            return hora
+        except ValueError:
+            print("Hora inválida! Use o formato hh:mm.")
+
+def input_texto_nao_vazio(mensagem):
+    while True:
+        texto = input(mensagem).strip()
+        if not texto:
+            print("Este campo não pode ser vazio.")
+        else:
+            return texto
+
+def buscar_paciente_por_email(email):
+    for paciente in pacientes:
+        if paciente['email'] == email:
+            return paciente
+    return None
 
 # ------------------- FUNÇÕES DE PACIENTE -------------------
 
 def cadastrar_paciente():
     print("\n[CADASTRO DE PACIENTE]")
-    nome = input("Nome: ")
-    email = input("Email: ")
-    senha = input("Senha: ")
+    nome = input_nome_valido()
+    email = input_email_valido()
 
-    for paciente in pacientes:
-        if paciente['email'] == email:
-            print("Email já cadastrado!")
-            return
+    if buscar_paciente_por_email(email):
+        print("Email já cadastrado!")
+        return
+
+    senha = input_senha_valida()
 
     pacientes.append({
         'nome': nome,
@@ -25,23 +87,27 @@ def cadastrar_paciente():
 def login():
     global paciente_logado
     print("\n[LOGIN]")
-    email = input("Email: ")
-    senha = input("Senha: ")
+    email = input_email_valido()
+    senha = input_texto_nao_vazio("Senha: ")
 
-    for paciente in pacientes:
-        if paciente['email'] == email and paciente['senha'] == senha:
-            paciente_logado = paciente
-            print(f"Login bem-sucedido! Bem-vindo(a), {paciente['nome']}.")
-            return
-    print("Email ou senha inválidos!")
+    paciente = buscar_paciente_por_email(email)
+    if paciente and paciente['senha'] == senha:
+        paciente_logado = paciente
+        print(f"Login bem-sucedido! Bem-vindo(a), {paciente['nome']}.")
+    else:
+        print("Email ou senha inválidos!")
 
 def logout():
     global paciente_logado
-    paciente_logado = None
-    print("Logout realizado com sucesso.")
+    if paciente_logado:
+        print(f"Logout de {paciente_logado['nome']} realizado com sucesso.")
+        paciente_logado = None
+    else:
+        print("Você não está logado.")
 
+#Apenas para demonstração, não está alinhado com a solução proposta
 def listar_pacientes():
-    print("\n[LISTA DE PACIENTES] - APENAS PARA PROVA DE CONCEITO - NAO FAZ SENTIDO NO NEGOCIO")
+    print("\n[LISTA DE PACIENTES]")
     for p in pacientes:
         print(f"- {p['nome']} ({p['email']})")
 
@@ -53,9 +119,9 @@ def agendar_consulta():
         return
 
     print("\n[AGENDAR CONSULTA]")
-    data = input("Data (dd/mm/aaaa): ")
-    hora = input("Hora (hh:mm): ")
-    descricao = input("Descrição: ")
+    data = input_data_valida()
+    hora = input_hora_valida()
+    descricao = input_texto_nao_vazio("Descrição da consulta: ")
 
     consultas.append({
         'email': paciente_logado['email'],
@@ -80,8 +146,9 @@ def listar_consultas_paciente():
     for c in consultas_paciente:
         print(f"- {c['data']} às {c['hora']}: {c['descricao']}")
 
+#Apenas para demonstração, não está alinhado com a solução proposta
 def listar_todas_consultas():
-    print("\n[TODAS AS CONSULTAS - APENAS PARA PROVA DE CONCEITO - NAO FAZ SENTIDO NO NEGOCIO]")
+    print("\n[TODAS AS CONSULTAS]")
     for c in consultas:
         print(f"- {c['data']} {c['hora']} | {c['descricao']} (Paciente: {c['email']})")
 
@@ -124,11 +191,10 @@ def menu_principal():
         elif opcao == 7:
             listar_todas_consultas()
         elif opcao == 0:
-            print("Saindo do sistema...")
+            print("Saindo do sistema... Até logo!")
             break
         else:
             print("Opção inválida!")
 
-# ------------------- EXECUÇÃO -------------------
-
+# Executa o sistema
 menu_principal()
